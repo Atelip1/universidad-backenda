@@ -1,0 +1,12 @@
+# Ignorar archivos de Visual Studio
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Archivos temporales
+*.log
+*.bak
+*.swp
