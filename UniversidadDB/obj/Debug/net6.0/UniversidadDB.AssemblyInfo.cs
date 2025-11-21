@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UniversidadDB")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3614a7b0c7288a6b62df54c61fc33647db64c397")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bd75c686df901a9151b5ab62041473920a3166ec")]
 [assembly: System.Reflection.AssemblyProductAttribute("UniversidadDB")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UniversidadDB")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
