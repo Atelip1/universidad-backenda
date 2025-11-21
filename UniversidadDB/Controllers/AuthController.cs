@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
 using UniversidadDB.Models;
 using UniversidadDB.Models.Auth;
+using System;
+using System.Threading.Tasks;
 
 namespace UniversidadDB.Controllers
 {
@@ -11,10 +13,13 @@ namespace UniversidadDB.Controllers
     public class AuthController : ControllerBase
     {
         private readonly UniversidadContext _context;
+        private readonly EmailService _emailService;
 
-        public AuthController(UniversidadContext context)
+        // Inyectamos el contexto de la base de datos y el servicio de correo electrónico
+        public AuthController(UniversidadContext context, EmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // POST: api/Auth/login
@@ -47,7 +52,7 @@ namespace UniversidadDB.Controllers
                 UsuarioId = user.UsuarioId,
                 NombreCompleto = user.NombreCompleto,
                 Email = user.Email,
-                Rol = user.Rol.NombreRol,                // "ADMIN" o "ESTUDIANTE"
+                Rol = user.Rol.NombreRol, // "ADMIN" o "ESTUDIANTE"
                 EstudianteId = user.Estudiante?.EstudianteId,
                 Message = "Login correcto."
             };
@@ -64,21 +69,21 @@ namespace UniversidadDB.Controllers
                 return BadRequest(ModelState);
             }
 
-            // 1. verificar que no exista ya el email
+            // 1. Verificar que no exista ya el email
             var existing = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (existing != null)
             {
                 return Conflict("Ya existe un usuario con ese email.");
             }
 
-            // 2. obtener Rol ESTUDIANTE
+            // 2. Obtener Rol ESTUDIANTE
             var rolEstudiante = await _context.Roles.FirstOrDefaultAsync(r => r.NombreRol == "ESTUDIANTE");
             if (rolEstudiante == null)
             {
                 return StatusCode(500, "No se encuentra el rol ESTUDIANTE en la base de datos.");
             }
 
-            // 3. crear Usuario
+            // 3. Crear Usuario
             var usuario = new Usuario
             {
                 NombreCompleto = request.NombreCompleto,
@@ -90,9 +95,9 @@ namespace UniversidadDB.Controllers
             };
 
             _context.Usuarios.Add(usuario);
-            await _context.SaveChangesAsync(); // guarda para tener UsuarioId
+            await _context.SaveChangesAsync(); // Guarda para tener UsuarioId
 
-            // 4. crear Estudiante (1:1 con Usuario)
+            // 4. Crear Estudiante (1:1 con Usuario)
             var estudiante = new Estudiante
             {
                 EstudianteId = usuario.UsuarioId,
@@ -105,6 +110,19 @@ namespace UniversidadDB.Controllers
             _context.Estudiantes.Add(estudiante);
             await _context.SaveChangesAsync();
 
+            // 5. Enviar correo de bienvenida
+            try
+            {
+                // Llamamos al servicio de correo para enviar el email
+                await _emailService.SendWelcomeEmail(request.Email, request.NombreCompleto);
+            }
+            catch (Exception ex)
+            {
+                // Si ocurre algún error al enviar el correo, se captura y responde con un mensaje adecuado
+                return StatusCode(500, $"Error al enviar el correo: {ex.Message}");
+            }
+
+            // Respuesta de éxito
             var response = new LoginResponse
             {
                 UsuarioId = usuario.UsuarioId,
