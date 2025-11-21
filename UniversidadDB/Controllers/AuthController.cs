@@ -5,6 +5,8 @@ using UniversidadDB.Models;
 using UniversidadDB.Models.Auth;
 using System;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace UniversidadDB.Controllers
 {
@@ -41,8 +43,8 @@ namespace UniversidadDB.Controllers
                 return Unauthorized("Usuario no encontrado o inactivo.");
             }
 
-            // ⚠️ Simple: comparar contraseña en texto plano
-            if (user.PasswordHash != request.Password)
+            // ⚠️ Usamos hash para la comparación de la contraseña
+            if (!VerifyPasswordHash(request.Password, user.PasswordHash))
             {
                 return Unauthorized("Contraseña incorrecta.");
             }
@@ -83,12 +85,12 @@ namespace UniversidadDB.Controllers
                 return StatusCode(500, "No se encuentra el rol ESTUDIANTE en la base de datos.");
             }
 
-            // 3. Crear Usuario
+            // 3. Crear Usuario con contraseña encriptada
             var usuario = new Usuario
             {
                 NombreCompleto = request.NombreCompleto,
                 Email = request.Email,
-                PasswordHash = request.Password,   // ⚠️ en la vida real: hashear
+                PasswordHash = HashPassword(request.Password),  // Hasheamos la contraseña
                 RolId = rolEstudiante.RolId,
                 Activo = true,
                 FechaRegistro = DateTime.Now
@@ -134,6 +136,23 @@ namespace UniversidadDB.Controllers
             };
 
             return Ok(response);
+        }
+
+        // Método para encriptar la contraseña al registrarse
+        private string HashPassword(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return Convert.ToBase64String(bytes); // Devuelve la contraseña encriptada en Base64
+            }
+        }
+
+        // Método para verificar si la contraseña ingresada corresponde con el hash almacenado
+        private bool VerifyPasswordHash(string password, string storedHash)
+        {
+            var hash = HashPassword(password);
+            return hash == storedHash; // Compara el hash calculado con el hash almacenado
         }
     }
 }
