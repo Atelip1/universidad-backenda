@@ -2,12 +2,14 @@
 using MimeKit;
 using System.Threading.Tasks;
 using MailKit.Security;
+using System;
+
 public class EmailService
 {
-    private readonly string _smtpServer = "smtp.gmail.com"; // Cambia esto por tu servidor SMTP
-    private readonly int _smtpPort = 587; // Usa el puerto adecuado
-    private readonly string _smtpUsername = "mariadelpilartasaycolaque@gmail.com";
-    private readonly string _smtpPassword = "snmj mwjx cxja zcaj";
+    private readonly string _smtpServer = "smtp.gmail.com"; // Servidor SMTP de Gmail
+    private readonly int _smtpPort = 587; // Puerto SMTP para TLS
+    private readonly string _smtpUsername = "mariadelpilartasaycolaque@gmail.com"; // Tu correo de Gmail
+    private readonly string _smtpPassword = "snmj mwjx cxja zcaj"; // Utiliza una contraseña de aplicación si tienes habilitada la autenticación en dos pasos
 
     public async Task SendWelcomeEmail(string toEmail, string userName)
     {
@@ -22,20 +24,27 @@ public class EmailService
         };
 
         message.Body = body;
-        try
-        { 
 
-        using (var client = new SmtpClient())
+        try
         {
-            await client.ConnectAsync(_smtpServer, _smtpPort, false);
-            await client.AuthenticateAsync(_smtpUsername, _smtpPassword);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            using (var client = new SmtpClient())
+            {
+                // Conectar con el servidor SMTP de Gmail usando TLS (true = TLS, false = no)
+                await client.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
+
+                // Autenticación con tu cuenta de Gmail
+                await client.AuthenticateAsync(_smtpUsername, _smtpPassword);
+
+                // Enviar el mensaje
+                await client.SendAsync(message);
+
+                // Desconectar del servidor SMTP
+                await client.DisconnectAsync(true);
+            }
         }
-    }
-    catch (Exception ex)
+        catch (Exception ex)
         {
-            // Maneja el error, por ejemplo, logueo
+            // Manejo del error
             Console.WriteLine($"Error al enviar el correo: {ex.Message}");
         }
     }
