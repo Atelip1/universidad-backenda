@@ -16,13 +16,17 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Configurar el puerto dinámico
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";  // Usar 5000 como fallback si no se establece
+app.Urls.Add($"http://*:{port}");  // Configurar la aplicación para que escuche en el puerto correcto
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Puedes activar esto si deseas usar HTTPS
 
 app.UseAuthorization();
 
