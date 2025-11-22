@@ -9,6 +9,8 @@
         public int? EstudianteId { get; set; }     // null si es ADMIN
 
         public string? Carrera { get; set; }       // 👈 NUEVO
+        public string? CodigoEstudiante { get; set; }  // 👈 NUEVO
+        public int? Ciclo { get; set; }                // 👈 NUEVO
 
         public string Message { get; set; } = null!;
     }

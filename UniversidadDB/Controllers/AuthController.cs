@@ -57,6 +57,8 @@ namespace UniversidadDB.Controllers
                 Rol = user.Rol.NombreRol, // "ADMIN" o "ESTUDIANTE"
                 EstudianteId = user.Estudiante?.EstudianteId,
                 Carrera = user.Estudiante?.Carrera,
+                CodigoEstudiante = user.Estudiante?.CodigoEstudiante, // 👈 ajusta al nombre real de tu propiedad
+                Ciclo = user.Estudiante?.Ciclo,
                 Message = "Login correcto."
             };
 
