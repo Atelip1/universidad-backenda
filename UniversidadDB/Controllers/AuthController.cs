@@ -36,7 +36,6 @@ namespace UniversidadDB.Controllers
             var user = await _context.Usuarios
                 .Include(u => u.Rol)
                 .Include(u => u.Estudiante)
-                .ThenInclude(e => e.Carrera)
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.Activo);
 
             if (user == null)
