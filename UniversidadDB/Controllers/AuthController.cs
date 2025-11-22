@@ -36,6 +36,7 @@ namespace UniversidadDB.Controllers
             var user = await _context.Usuarios
                 .Include(u => u.Rol)
                 .Include(u => u.Estudiante)
+                .ThenInclude(e => e.Carrera)
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.Activo);
 
             if (user == null)
@@ -56,6 +57,7 @@ namespace UniversidadDB.Controllers
                 Email = user.Email,
                 Rol = user.Rol.NombreRol, // "ADMIN" o "ESTUDIANTE"
                 EstudianteId = user.Estudiante?.EstudianteId,
+                Carrera = user.Estudiante?.Carrera,
                 Message = "Login correcto."
             };
 

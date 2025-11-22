@@ -7,6 +7,9 @@
         public string Email { get; set; } = null!;
         public string Rol { get; set; } = null!;   // "ADMIN" o "ESTUDIANTE"
         public int? EstudianteId { get; set; }     // null si es ADMIN
+
+        public string? Carrera { get; set; }       // 👈 NUEVO
+
         public string Message { get; set; } = null!;
     }
 }
