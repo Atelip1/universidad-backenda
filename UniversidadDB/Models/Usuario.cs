@@ -14,10 +14,10 @@
 
         // Relación 1 a 1 con Estudiante
         public Estudiante? Estudiante { get; set; }
-        public string? ResetToken { get; set; }
-        public DateTime? ResetTokenExpiration { get; set; }
+      
         public string? PasswordResetCode { get; set; }
         public DateTime? PasswordResetCodeExpiration { get; set; }
+       
 
     }
 }

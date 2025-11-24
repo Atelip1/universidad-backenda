@@ -125,18 +125,7 @@ namespace UniversidadDB.Controllers
             _context.Estudiantes.Add(estudiante);
             await _context.SaveChangesAsync();
 
-            // 5. Enviar correo de bienvenida
-            try
-            {
-                await _emailService.SendWelcomeEmail(request.Email, request.NombreCompleto);
-            }
-            catch (Exception ex)
-            {
-                // Si falla el correo, el usuario igual queda registrado
-                return StatusCode(500, $"Error al enviar el correo: {ex.Message}");
-            }
-
-            // Respuesta de éxito
+            // 5. Respuesta de éxito (sin envío de correo)
             var response = new LoginResponse
             {
                 UsuarioId = usuario.UsuarioId,
