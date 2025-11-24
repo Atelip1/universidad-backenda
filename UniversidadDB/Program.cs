@@ -1,5 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
+using UniversidadDB.Services;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +10,7 @@ builder.Services.AddDbContext<UniversidadContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Registrar EmailService en el contenedor de dependencias
-builder.Services.AddScoped<EmailService>(); // Esto hace que el servicio EmailService esté disponible
+builder.Services.AddScoped<EmailService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -16,20 +18,20 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configurar el puerto dinámico
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";  // Usar 5000 como fallback si no se establece
-app.Urls.Add($"http://*:{port}");  // Configurar la aplicación para que escuche en el puerto correcto
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection(); // Puedes activar esto si deseas usar HTTPS
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// ðŸ‘‡ Para Render, si aÃºn no lo pusiste:
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
