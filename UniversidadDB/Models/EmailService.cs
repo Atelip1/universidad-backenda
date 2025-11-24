@@ -1,77 +1,50 @@
 ﻿using System;
 using System.Threading.Tasks;
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
-namespace UniversidadDB.Services
+namespace UniversidadDB.Models
 {
     public class EmailService
     {
-        private readonly string _smtpServer = "smtp.gmail.com"; // Servidor SMTP de Gmail
-        private readonly int _smtpPort = 587;                    // Puerto SMTP para TLS
-        private readonly string _smtpUsername = "mariadelpilartasaycolaque@gmail.com";
-        private readonly string _smtpPassword = "snmj mwjx cxja zcaj"; // Contraseña de aplicación
-
-        // 📧 1) Correo de bienvenida
-        public async Task SendWelcomeEmail(string toEmail, string userName)
+        /// <summary>
+        /// Envía el correo con el código de recuperación de contraseña usando SendGrid.
+        /// La API Key se lee desde la variable de entorno SENDGRID_API_KEY (configurada en Render).
+        /// </summary>
+        public async Task SendPasswordResetEmail(string toEmail, string userName, string code)
         {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Universidad", "no-reply@upsjb.edu.pe"));
-            message.To.Add(new MailboxAddress(userName, toEmail));
-            message.Subject = "Bienvenido a la Universidad";
+            // 👇 IMPORTANTE: la API key ya NO está en el código.
+            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
 
-            var bodyBuilder = new BodyBuilder
+            if (string.IsNullOrWhiteSpace(apiKey))
             {
-                TextBody = $"Hola {userName},\n\nBienvenido a la plataforma de la universidad.\n\nSaludos,\nEquipo Académico"
-            };
-
-            message.Body = bodyBuilder.ToMessageBody();
-
-            await SendAsync(message);
-        }
-
-        // 📧 2) Correo para restablecer contraseña
-        //    Ajusta los parámetros si en tu AuthController usas otros (pero casi seguro son email + token)
-        public async Task SendPasswordResetEmail(string toEmail, string resetToken)
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Universidad", "no-reply@upsjb.edu.pe"));
-            message.To.Add(new MailboxAddress("", toEmail));
-            message.Subject = "Restablecer contraseña";
-
-            // 🔗 Puedes cambiar esta URL por la de tu frontend real
-            var resetLink =
-                $"https://mi-app-universidad.com/reset-password?email={Uri.EscapeDataString(toEmail)}&token={Uri.EscapeDataString(resetToken)}";
-
-            var bodyBuilder = new BodyBuilder
-            {
-                TextBody =
-                    $"Has solicitado restablecer tu contraseña.\n\n" +
-                    $"Código de recuperación: {resetToken}\n\n" +
-                    $"También puedes usar el siguiente enlace:\n{resetLink}\n\n" +
-                    $"Si no solicitaste este cambio, puedes ignorar este mensaje."
-            };
-
-            message.Body = bodyBuilder.ToMessageBody();
-
-            await SendAsync(message);
-        }
-
-        // Método interno reutilizable para enviar correos
-        private async Task SendAsync(MimeMessage message)
-        {
-            using var client = new SmtpClient();
-
-            try
-            {
-                await client.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
-                await client.AuthenticateAsync(_smtpUsername, _smtpPassword);
-                await client.SendAsync(message);
+                throw new InvalidOperationException("No se ha configurado la SendGrid API Key.");
             }
-            finally
+
+            var client = new SendGridClient(apiKey);
+
+            var from = new EmailAddress("no-reply@upsjb.edu.pe", "Portal Académico UPSJB");
+            var to = new EmailAddress(toEmail, userName);
+            var subject = "Código para restablecer tu contraseña";
+
+            var plainTextContent =
+                $"Hola {userName},\n\n" +
+                $"Tu código para restablecer la contraseña es: {code}\n\n" +
+                "Si tú no solicitaste este correo, puedes ignorarlo.";
+
+            var htmlContent =
+                $"<p>Hola <strong>{userName}</strong>,</p>" +
+                "<p>Tu código para restablecer la contraseña es:</p>" +
+                $"<h2>{code}</h2>" +
+                "<p>Si tú no solicitaste este correo, puedes ignorar este mensaje.</p>";
+
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+            var response = await client.SendEmailAsync(msg);
+
+            if ((int)response.StatusCode >= 400)
             {
-                await client.DisconnectAsync(true);
+                var body = await response.Body.ReadAsStringAsync();
+                throw new Exception($"Error al enviar el correo: {response.StatusCode} - {body}");
             }
         }
     }

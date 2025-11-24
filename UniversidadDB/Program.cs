@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
+using UniversidadDB.Models;
 using UniversidadDB.Services;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddDbContext<UniversidadContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Registrar EmailService en el contenedor de dependencias
+
 builder.Services.AddScoped<EmailService>();
 
 builder.Services.AddControllers();

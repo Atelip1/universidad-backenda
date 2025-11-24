@@ -1,9 +1,16 @@
-﻿namespace UniversidadDB.Data.Auth
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace UniversidadDB.Models.Auth
 {
     public class ResetPasswordRequest
     {
-        public string Email { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
-        public string NewPassword { get; set; } = string.Empty;
+        [Required, EmailAddress]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        public string ResetCode { get; set; } = null!;
+
+        [Required]
+        public string NewPassword { get; set; } = null!;
     }
 }

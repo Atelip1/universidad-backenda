@@ -9,6 +9,7 @@ using UniversidadDB.Data;
 using UniversidadDB.Models;
 using UniversidadDB.Models.Auth;
 using UniversidadDB.Data.Auth;
+using UniversidadDB.Models.Auth;
 
 namespace UniversidadDB.Controllers
 {
@@ -142,8 +143,6 @@ namespace UniversidadDB.Controllers
         // ===================== OLVIDÉ MI CONTRASEÑA =====================
 
         // 1) Usuario escribe su correo -> le enviamos código
-
-        // 1) Usuario escribe su correo -> le enviamos código
         // POST: api/Auth/forgot-password
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
@@ -166,14 +165,17 @@ namespace UniversidadDB.Controllers
             var code = GenerateResetCode();
 
             user.PasswordResetCode = code;
-            user.PasswordResetCodeExpiration = DateTime.Now.AddMinutes(15); // válido 15 min
+            user.PasswordResetCodeExpiration = DateTime.UtcNow.AddMinutes(15); // válido 15 min
             await _context.SaveChangesAsync();
 
             try
             {
-                // 🔴 ANTES: _emailService.SendPasswordResetEmail(user.Email, token);
-                // ✅ AHORA:
-                await _emailService.SendPasswordResetEmail(user.Email, code);
+                // 👇 IMPORTANTE: Email + Nombre + Código
+                await _emailService.SendPasswordResetEmail(
+                    user.Email,
+                    user.NombreCompleto,
+                    code
+                );
             }
             catch (Exception ex)
             {
@@ -188,37 +190,30 @@ namespace UniversidadDB.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.Code) ||
-                string.IsNullOrWhiteSpace(request.NewPassword))
-            {
-                return BadRequest("Email, código y nueva contraseña son obligatorios.");
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             var user = await _context.Usuarios
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.Activo);
 
             if (user == null)
-            {
-                return BadRequest("Usuario no encontrado.");
-            }
+                return NotFound("Usuario no encontrado o inactivo.");
 
-            if (string.IsNullOrEmpty(user.PasswordResetCode) ||
+            if (user.PasswordResetCode == null ||
                 user.PasswordResetCodeExpiration == null ||
-                user.PasswordResetCodeExpiration < DateTime.Now ||
-                !string.Equals(user.PasswordResetCode, request.Code, StringComparison.Ordinal))
+                user.PasswordResetCodeExpiration < DateTime.UtcNow ||
+                !string.Equals(user.PasswordResetCode, request.ResetCode))
             {
-                return BadRequest("Código inválido o vencido.");
+                return BadRequest("Código inválido o expirado.");
             }
 
-            // Actualizamos contraseña
             user.PasswordHash = HashPassword(request.NewPassword);
             user.PasswordResetCode = null;
             user.PasswordResetCodeExpiration = null;
 
             await _context.SaveChangesAsync();
 
-            return Ok("Contraseña actualizada correctamente.");
+            return Ok(new { message = "Contraseña actualizada correctamente." });
         }
 
         // ===================== HELPERS DE CONTRASEÑA =====================
@@ -260,7 +255,7 @@ namespace UniversidadDB.Controllers
     public class ResetPasswordRequest
     {
         public string Email { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
+        public string ResetCode { get; set; } = string.Empty; // 👈 antes era Code
         public string NewPassword { get; set; } = string.Empty;
     }
 }
