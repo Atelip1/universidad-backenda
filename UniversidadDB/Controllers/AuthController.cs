@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using UniversidadDB.Services;
 using System.Threading.Tasks;
 using UniversidadDB.Data;
 using UniversidadDB.Models;
@@ -152,6 +153,8 @@ namespace UniversidadDB.Controllers
         // ===================== OLVIDÉ MI CONTRASEÑA =====================
 
         // 1) Usuario escribe su correo -> le enviamos código
+
+        // 1) Usuario escribe su correo -> le enviamos código
         // POST: api/Auth/forgot-password
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
@@ -160,12 +163,6 @@ namespace UniversidadDB.Controllers
             {
                 return BadRequest("El email es obligatorio.");
             }
-
-            // (Opcional) forzar correo institucional
-            // if (!request.Email.EndsWith("@upsjb.edu.pe", StringComparison.OrdinalIgnoreCase))
-            // {
-            //     return BadRequest("Debes usar tu correo institucional (@upsjb.edu.pe).");
-            // }
 
             var user = await _context.Usuarios
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.Activo);
@@ -185,6 +182,8 @@ namespace UniversidadDB.Controllers
 
             try
             {
+                // 🔴 ANTES: _emailService.SendPasswordResetEmail(user.Email, token);
+                // ✅ AHORA:
                 await _emailService.SendPasswordResetEmail(user.Email, code);
             }
             catch (Exception ex)
