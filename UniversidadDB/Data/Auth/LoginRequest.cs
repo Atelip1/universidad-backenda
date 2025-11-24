@@ -8,4 +8,3 @@
         public DateTime? ResetCodeExpiration { get; set; }  // fecha de expiración
     }
 }
-}
