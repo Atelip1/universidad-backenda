@@ -1,16 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text;
-using UniversidadDB.Services;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using UniversidadDB.Data;
+using UniversidadDB.Data.Auth;
 using UniversidadDB.Models;
 using UniversidadDB.Models.Auth;
-using UniversidadDB.Data.Auth;
 using UniversidadDB.Models.Auth;
-
+using UniversidadDB.Services;
 namespace UniversidadDB.Controllers
 {
     [ApiController]
@@ -19,12 +19,13 @@ namespace UniversidadDB.Controllers
     {
         private readonly UniversidadContext _context;
         private readonly EmailService _emailService;
-
+        private readonly JwtService _jwtService;
         // Inyectamos el contexto de la base de datos y el servicio de correo electrónico
-        public AuthController(UniversidadContext context, EmailService emailService)
+        public AuthController(UniversidadContext context, EmailService emailService, JwtService jwtService)
         {
             _context = context;
             _emailService = emailService;
+            _jwtService = jwtService;
         }
 
         // ===================== LOGIN =====================
@@ -33,9 +34,7 @@ namespace UniversidadDB.Controllers
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            {
                 return BadRequest("Email y contraseña son obligatorios.");
-            }
 
             var user = await _context.Usuarios
                 .Include(u => u.Rol)
@@ -43,31 +42,32 @@ namespace UniversidadDB.Controllers
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.Activo);
 
             if (user == null)
-            {
                 return Unauthorized("Usuario no encontrado o inactivo.");
-            }
 
-            // ⚠️ Usamos hash para la comparación de la contraseña
             if (!VerifyPasswordHash(request.Password, user.PasswordHash))
-            {
                 return Unauthorized("Contraseña incorrecta.");
-            }
+
+            // ✅ Generar JWT
+            var rol = user.Rol?.NombreRol ?? "ESTUDIANTE";
+            var token = _jwtService.GenerateToken(user.UsuarioId, user.Email, rol);
 
             var response = new LoginResponse
             {
                 UsuarioId = user.UsuarioId,
                 NombreCompleto = user.NombreCompleto,
                 Email = user.Email,
-                Rol = user.Rol.NombreRol, // "ADMIN" o "ESTUDIANTE"
-                EstudianteId = user.Estudiante?.EstudianteId,
+                Rol = rol, // "ADMIN" o "ESTUDIANTE"
+                EstudianteId = user.Estudiante?.EstudianteId,   // si tu LoginResponse NO es nullable, usa ?? 0
                 Carrera = user.Estudiante?.Carrera,
                 CodigoEstudiante = user.Estudiante?.CodigoEstudiante,
-                Ciclo = user.Estudiante?.Ciclo,
+                Ciclo = user.Estudiante?.Ciclo,                 // si NO es nullable, usa ?? 0
+                Token = token,
                 Message = "Login correcto."
             };
 
             return Ok(response);
         }
+
 
         // ===================== REGISTRO ESTUDIANTE =====================
         // POST: api/Auth/register-estudiante

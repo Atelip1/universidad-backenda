@@ -20,6 +20,7 @@ builder.Services.AddDbContext<UniversidadContext>(options =>
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<FcmService>();
+builder.Services.AddSingleton<JwtService>();
 
 builder.Services.AddControllers();
 
