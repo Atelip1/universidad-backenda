@@ -9,13 +9,16 @@ namespace UniversidadDB.Data
             : base(options)
         {
         }
-
+        public DbSet<DeviceToken> DeviceTokens { get; set; }
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Estudiante> Estudiantes { get; set; }
         public DbSet<PeriodoAcademico> PeriodosAcademicos { get; set; }
         public DbSet<Curso> Cursos { get; set; }
         public DbSet<Inscripcion> Inscripciones { get; set; }
+        public DbSet<NotificacionSistema> NotificacionesSistema { get; set; }
+        public DbSet<NotificacionSistema> NotificacionesSistemaHistorial { get; set; } // (si fuera otro)
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

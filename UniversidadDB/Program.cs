@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
 using UniversidadDB.Models;
 using UniversidadDB.Services;
-
+using UniversidadDB.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext con SQL Server
@@ -13,7 +13,8 @@ builder.Services.AddDbContext<UniversidadContext>(options =>
 // Registrar EmailService en el contenedor de dependencias
 
 builder.Services.AddScoped<EmailService>();
-
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<FcmService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
