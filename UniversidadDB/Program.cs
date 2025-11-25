@@ -1,40 +1,42 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
-using UniversidadDB.Models;
 using UniversidadDB.Services;
-using UniversidadDB.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext con SQL Server
+// ✅ DbContext con SQL Server (Azure SQL)
 builder.Services.AddDbContext<UniversidadContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registrar EmailService en el contenedor de dependencias
-
+// ✅ Servicios
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<FcmService>();
+
+// ✅ Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// ✅ Swagger SIEMPRE (incluye Render/Production)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "UniversidadDB API v1");
+    c.RoutePrefix = "swagger"; // => /swagger
+    // Si quieres Swagger en la raíz "/", usa: c.RoutePrefix = "";
+});
 
-// app.UseHttpsRedirection();
-
+// Si luego habilitas auth con JWT, normalmente va antes de Authorization:
+// app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// 👇 Para Render, si aún no lo pusiste:
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+// ✅ Render: escuchar en el puerto que Render asigna (por defecto 10000)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
