@@ -9,7 +9,7 @@ namespace UniversidadDB.Controllers
 {
     [ApiController]
     [Route("api/admin/notificaciones")]
-    [Authorize] // luego puedes restringir a admin si ya manejas roles
+    [Authorize]
     public class AdminNotificacionesController : ControllerBase
     {
         private readonly UniversidadContext _context;
@@ -23,7 +23,15 @@ namespace UniversidadDB.Controllers
 
         public class EnviarNotificacionRequest
         {
-            public List<int> UsuarioIds { get; set; } = new();
+            public bool ATodos { get; set; } = false;
+
+            // ✅ Si ATodos=true y RolId tiene valor => se envía a TODOS los usuarios con ese rol
+            // Ej: RolId = 2 (Estudiantes) / RolId = 1 (Admin) - según tu BD
+            public int? RolId { get; set; } = null;
+
+            // ✅ Si ATodos=false, se usa esta lista
+            public List<int>? UsuarioIds { get; set; }
+
             public string Titulo { get; set; } = "";
             public string Mensaje { get; set; } = "";
         }
@@ -31,15 +39,36 @@ namespace UniversidadDB.Controllers
         [HttpPost("enviar")]
         public async Task<IActionResult> Enviar([FromBody] EnviarNotificacionRequest req)
         {
-            if (req.UsuarioIds == null || req.UsuarioIds.Count == 0)
-                return BadRequest("UsuarioIds requerido.");
-
             if (string.IsNullOrWhiteSpace(req.Titulo) || string.IsNullOrWhiteSpace(req.Mensaje))
-                return BadRequest("Titulo y Mensaje son obligatorios.");
+                return BadRequest("Título y mensaje son obligatorios.");
 
-            // 1) Guardar en SQL (una notificación por usuario)
+            // 1) Determinar destinatarios
+            List<int> userIds;
+
+            if (req.ATodos)
+            {
+                var q = _context.Usuarios.AsNoTracking();
+
+                // ⚠️ Si tu columna se llama distinto (IdRol, RolID, etc.) cámbiala aquí:
+                if (req.RolId.HasValue)
+                    q = q.Where(u => u.RolId == req.RolId.Value);
+
+                userIds = await q.Select(u => u.UsuarioId).ToListAsync(); // ⚠️ Ajusta si tu llave es "Id"
+            }
+            else
+            {
+                userIds = (req.UsuarioIds ?? new List<int>())
+                    .Distinct()
+                    .ToList();
+            }
+
+            if (userIds.Count == 0)
+                return BadRequest("No hay destinatarios.");
+
+            // 2) Guardar notificaciones en SQL (1 fila por usuario)
             var now = DateTime.UtcNow;
-            var rows = req.UsuarioIds.Select(uid => new NotificacionSistema
+
+            var rows = userIds.Select(uid => new NotificacionSistema
             {
                 UsuarioId = uid,
                 Titulo = req.Titulo.Trim(),
@@ -51,28 +80,45 @@ namespace UniversidadDB.Controllers
             _context.NotificacionesSistema.AddRange(rows);
             await _context.SaveChangesAsync();
 
-            // 2) Buscar tokens de esos usuarios
+            // 3) Buscar tokens de esos usuarios
             var tokens = await _context.DeviceTokens
-                .Where(d => req.UsuarioIds.Contains(d.UsuarioId))
+                .AsNoTracking()
+                .Where(d => userIds.Contains(d.UsuarioId))
                 .Select(d => d.Token)
                 .Distinct()
                 .ToListAsync();
 
-            // 3) Enviar push por FCM
+            // 4) Enviar Push por FCM (sin bool, contamos por try/catch)
+            int enviados = 0;
+
             foreach (var token in tokens)
             {
-                await _fcm.SendToTokenAsync(
-                    token,
-                    req.Titulo,
-                    req.Mensaje,
-                    data: new Dictionary<string, string>
-                    {
-                        ["tipo"] = "sistema"
-                    }
-                );
+                try
+                {
+                    await _fcm.SendToTokenAsync(
+                        token,
+                        req.Titulo.Trim(),
+                        req.Mensaje.Trim(),
+                        data: new Dictionary<string, string>
+                        {
+                            ["tipo"] = "sistema"
+                        }
+                    );
+                    enviados++;
+                }
+                catch
+                {
+                    // Si quieres, aquí podrías loguear el error
+                    // pero NO detenemos todo el envío si un token falla.
+                }
             }
 
-            return Ok(new { guardadas = rows.Count, tokens = tokens.Count });
+            return Ok(new
+            {
+                guardadas = rows.Count,
+                tokens = tokens.Count,
+                enviados = enviados
+            });
         }
     }
 }
