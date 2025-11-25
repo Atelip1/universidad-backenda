@@ -42,11 +42,12 @@ public class EmailService
         var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
 
         var response = await client.SendEmailAsync(msg);
-
+        Console.WriteLine($"SendGrid status: {response.StatusCode}");
         if ((int)response.StatusCode >= 400)
         {
             var body = await response.Body.ReadAsStringAsync();
             throw new Exception($"Error al enviar el correo: {response.StatusCode} - {body}");
         }
+
     }
 }
