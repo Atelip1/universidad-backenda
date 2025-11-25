@@ -139,6 +139,25 @@
           }
         }
       },
+      "Microsoft.AspNetCore.Authentication.JwtBearer/6.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.10.0"
+        },
+        "compile": {
+          "lib/net6.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
       "Microsoft.Bcl.AsyncInterfaces/1.1.1": {
         "type": "package",
         "compile": {
@@ -1624,6 +1643,21 @@
         "lib/netstandard2.1/MailKit.xml",
         "mailkit.4.14.1.nupkg.sha512",
         "mailkit.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.Authentication.JwtBearer/6.0.0": {
+      "sha512": "eIhpX25uUn33Ornnh718V2G/nESvk3TNX2FjTarv634GLfE50Fhz2geJ/QYpSmFaUIQ1hkZPfd9i0LcpZ9bfLQ==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.authentication.jwtbearer/6.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net6.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll",
+        "lib/net6.0/Microsoft.AspNetCore.Authentication.JwtBearer.xml",
+        "microsoft.aspnetcore.authentication.jwtbearer.6.0.0.nupkg.sha512",
+        "microsoft.aspnetcore.authentication.jwtbearer.nuspec"
       ]
     },
     "Microsoft.Bcl.AsyncInterfaces/1.1.1": {
@@ -4450,6 +4484,7 @@
     "net6.0": [
       "Google.Apis.Auth >= 1.73.0",
       "MailKit >= 4.14.1",
+      "Microsoft.AspNetCore.Authentication.JwtBearer >= 6.0.0",
       "Microsoft.EntityFrameworkCore.SqlServer >= 7.0.0",
       "Microsoft.EntityFrameworkCore.Tools >= 7.0.0",
       "SendGrid >= 9.28.1",
@@ -4514,6 +4549,10 @@
           "MailKit": {
             "target": "Package",
             "version": "[4.14.1, )"
+          },
+          "Microsoft.AspNetCore.Authentication.JwtBearer": {
+            "target": "Package",
+            "version": "[6.0.0, )"
           },
           "Microsoft.EntityFrameworkCore.SqlServer": {
             "target": "Package",

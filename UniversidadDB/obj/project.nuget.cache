@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ZvOgyoaGdTo=",
+  "dgSpecHash": "PX9wubAS8fA=",
   "success": true,
   "projectFilePath": "C:\\Users\\Pilar Tasayco\\source\\repos\\UniversidadDB\\UniversidadDB\\UniversidadDB.csproj",
   "expectedPackageFiles": [
@@ -12,6 +12,7 @@
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\google.apis.core\\1.73.0\\google.apis.core.1.73.0.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\mailkit\\4.14.1\\mailkit.4.14.1.nupkg.sha512",
+    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\6.0.0\\microsoft.aspnetcore.authentication.jwtbearer.6.0.0.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.csharp\\4.5.0\\microsoft.csharp.4.5.0.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.data.sqlclient\\5.0.1\\microsoft.data.sqlclient.5.0.1.nupkg.sha512",
@@ -89,10 +90,10 @@
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\system.threading.tasks\\4.3.0\\system.threading.tasks.4.3.0.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\system.windows.extensions\\5.0.0\\system.windows.extensions.5.0.0.nupkg.sha512",
-    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\6.0.36\\microsoft.windowsdesktop.app.ref.6.0.36.nupkg.sha512",
-    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.netcore.app.ref\\6.0.36\\microsoft.netcore.app.ref.6.0.36.nupkg.sha512",
     "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\6.0.36\\microsoft.aspnetcore.app.ref.6.0.36.nupkg.sha512",
-    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\6.0.36\\microsoft.netcore.app.host.win-x64.6.0.36.nupkg.sha512"
+    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\6.0.36\\microsoft.netcore.app.host.win-x64.6.0.36.nupkg.sha512",
+    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.netcore.app.ref\\6.0.36\\microsoft.netcore.app.ref.6.0.36.nupkg.sha512",
+    "C:\\Users\\Pilar Tasayco\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\6.0.36\\microsoft.windowsdesktop.app.ref.6.0.36.nupkg.sha512"
   ],
   "logs": []
 }
