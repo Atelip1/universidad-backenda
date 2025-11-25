@@ -89,7 +89,7 @@ namespace UniversidadDB.Controllers
                 .ToListAsync();
 
             // 4) Enviar Push por FCM (sin bool, contamos por try/catch)
-            int enviados = 0;
+            int enviados = 0, fallidos = 0;
 
             foreach (var token in tokens)
             {
@@ -99,26 +99,18 @@ namespace UniversidadDB.Controllers
                         token,
                         req.Titulo.Trim(),
                         req.Mensaje.Trim(),
-                        data: new Dictionary<string, string>
-                        {
-                            ["tipo"] = "sistema"
-                        }
+                        data: new Dictionary<string, string> { ["tipo"] = "sistema" }
                     );
                     enviados++;
                 }
                 catch
                 {
-                    // Si quieres, aquí podrías loguear el error
-                    // pero NO detenemos todo el envío si un token falla.
+                    fallidos++;
                 }
             }
 
-            return Ok(new
-            {
-                guardadas = rows.Count,
-                tokens = tokens.Count,
-                enviados = enviados
-            });
+            return Ok(new { guardadas = rows.Count, tokens = tokens.Count, enviados, fallidos });
+
         }
     }
 }
