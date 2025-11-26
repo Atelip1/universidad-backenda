@@ -23,6 +23,7 @@ namespace UniversidadDB.Data
         public DbSet<Inscripcion> Inscripciones { get; set; } = null!;
         public DbSet<NotificacionSistema> NotificacionesSistema { get; set; } = null!;
         public DbSet<Nota> Notas { get; set; }
+        public DbSet<MaterialCurso> MaterialCursos { get; set; }
 
         // Apuntes & Recordatorios
         public DbSet<Apunte> Apuntes { get; set; } = null!;
