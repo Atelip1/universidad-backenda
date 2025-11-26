@@ -64,7 +64,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         {
             new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
-            new string[] { }
+            Array.Empty<string>()
         }
     });
 });
@@ -79,20 +79,20 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// ✅ Importante: Authentication ANTES que Authorization
-app.UseAuthentication();
-app.UseAuthorization();
-
-// ✅ FIX Render: asegurar que exista /app/Uploads antes de usar StaticFiles
-var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+// ✅ Crear carpeta Uploads si no existe (EVITA: DirectoryNotFoundException)
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "Uploads");
 Directory.CreateDirectory(uploadsPath);
 
+// ✅ Servir archivos subidos: https://tuapi/Uploads/archivo.pdf
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/Uploads"
 });
 
-app.MapControllers();
+// ✅ Importante: Authentication ANTES que Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
+app.MapControllers();
 app.Run();
