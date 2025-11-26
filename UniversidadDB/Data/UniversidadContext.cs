@@ -107,13 +107,13 @@ namespace UniversidadDB.Data
             modelBuilder.Entity<CursoMaterial>().ToTable("CursoMateriales")
                 .HasKey(x => x.MaterialId);
 
-           
+
             modelBuilder.Entity<EstudianteCursoEstado>(entity =>
             {
-                // Notas 0.00 - 20.00 (ej: 10.50)
                 entity.Property(x => x.NotaFinal)
-                      .HasPrecision(4, 2);
+                      .HasPrecision(4, 2); // 0.00 a 99.99, suficiente para notas 0-20
             });
+
 
             base.OnModelCreating(modelBuilder);
         }
