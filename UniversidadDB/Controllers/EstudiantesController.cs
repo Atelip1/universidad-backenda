@@ -25,13 +25,11 @@ namespace UniversidadDB.Controllers
             _db = db;
         }
 
-        // ✅ Helper para obtener el ID del usuario autenticado
         private int GetUserId()
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
             if (claim == null)
                 throw new Exception("No se encontró el claim del usuario.");
-
             return int.Parse(claim.Value);
         }
 
@@ -143,27 +141,13 @@ namespace UniversidadDB.Controllers
         {
             try
             {
-                var allowed = new HashSet<string> { "PENDIENTE", "EN_CURSO", "APROBADO", "REPROBADO" };
+                var allowed = new HashSet<string> { "PENDIENTE", "EN_CURSO", "APROBADO", "DESAPROBADO", "REPROBADO" };
                 var estado = (dto.Estado ?? "").Trim().ToUpperInvariant();
                 if (!allowed.Contains(estado))
                     return BadRequest(new { message = "Estado inválido." });
 
                 var userId = AuthHelpers.GetUserId(User);
                 var estudianteId = await AuthHelpers.GetEstudianteIdAsync(_db, userId);
-
-                var carreraId = await _db.Estudiantes.AsNoTracking()
-                    .Where(e => e.EstudianteId == estudianteId)
-                    .Select(e => e.CarreraId)
-                    .FirstOrDefaultAsync();
-
-                if (carreraId is null)
-                    return BadRequest(new { message = "El estudiante no tiene CarreraId asignado." });
-
-                var enMalla = await _db.MallaCarrera.AsNoTracking()
-                    .AnyAsync(m => m.CarreraId == carreraId.Value && m.CursoId == cursoId && m.Activo);
-
-                if (!enMalla)
-                    return NotFound(new { message = "Curso no pertenece a tu malla." });
 
                 var row = await _db.EstudianteCursoEstados
                     .FirstOrDefaultAsync(x => x.EstudianteId == estudianteId && x.CursoId == cursoId);
@@ -179,7 +163,6 @@ namespace UniversidadDB.Controllers
                 }
 
                 row.Estado = estado;
-                row.PeriodoId = dto.PeriodoId;
                 row.NotaFinal = dto.NotaFinal;
                 row.UpdatedAt = DateTime.UtcNow;
 
@@ -190,14 +173,13 @@ namespace UniversidadDB.Controllers
                     row.EstudianteId,
                     row.CursoId,
                     row.Estado,
-                    row.PeriodoId,
                     row.NotaFinal,
                     row.UpdatedAt
                 });
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -225,32 +207,107 @@ namespace UniversidadDB.Controllers
         {
             var userId = GetUserId();
 
-            var nota = new Nota
-            {
-                EstudianteId = userId,
-                CursoId = cursoId,
-                Nombre = dto.Nombre,
-                NotaValor = dto.Nota,
-                FechaRegistro = DateTime.UtcNow
-            };
+            // ✅ Permitir Parcial y Final
+            var permitidos = new[] { "PC1", "PC2", "PC3", "PC4", "PARCIAL", "FINAL" };
+            var nombre = (dto.Nombre ?? "").Trim().ToUpperInvariant();
+            if (!permitidos.Contains(nombre))
+                return BadRequest(new { message = "Tipo de nota no válido." });
 
-            _db.Notas.Add(nota);
+            // ✅ Si ya existe la nota, actualízala en vez de duplicar
+            var notaExistente = await _db.Notas.FirstOrDefaultAsync(n =>
+                n.EstudianteId == userId && n.CursoId == cursoId && n.Nombre.ToUpper() == nombre);
+
+            if (notaExistente != null)
+            {
+                notaExistente.NotaValor = dto.Nota;
+                notaExistente.FechaRegistro = DateTime.UtcNow;
+            }
+            else
+            {
+                var nueva = new Nota
+                {
+                    EstudianteId = userId,
+                    CursoId = cursoId,
+                    Nombre = nombre,
+                    NotaValor = dto.Nota,
+                    FechaRegistro = DateTime.UtcNow
+                };
+                _db.Notas.Add(nueva);
+            }
+
             await _db.SaveChangesAsync();
 
-            return Ok(new
-            {
-                nota.NotaId,
-                nota.Nombre,
-                nota.NotaValor,
-                nota.FechaRegistro
-            });
+            // ✅ Calcular promedio y actualizar estado
+            await CalcularPromedioYActualizarEstado(userId, cursoId);
+
+            return Ok(new { message = "Nota guardada correctamente ✅" });
         }
 
-        // DTO interno para recibir datos
-        public class NotaDto
+        // ==========================================
+        // 🔹 Función auxiliar: calcular promedio y actualizar estado
+        // ==========================================
+
+        private async Task CalcularPromedioYActualizarEstado(int estudianteId, int cursoId)
         {
-            public string Nombre { get; set; } = string.Empty;
-            public double Nota { get; set; }
+            var notas = await _db.Notas
+                .Where(n => n.EstudianteId == estudianteId && n.CursoId == cursoId)
+                .ToListAsync();
+
+            if (!notas.Any()) return;
+
+            // Pesos oficiales (manteniendo double para evitar errores)
+            var pesos = new Dictionary<string, double>
+            {
+                ["PC1"] = 0.15,
+                ["PC2"] = 0.15,
+                ["PC3"] = 0.15,
+                ["PC4"] = 0.15,
+                ["PARCIAL"] = 0.20,
+                ["FINAL"] = 0.20
+            };
+
+            double suma = 0;
+            double totalPesos = 0;
+
+            foreach (var n in notas)
+            {
+                var nombre = (n.Nombre ?? "").Trim().ToUpperInvariant();
+                if (!pesos.TryGetValue(nombre, out var peso)) continue;
+
+                suma += n.NotaValor * peso;
+                totalPesos += peso;
+            }
+
+            if (totalPesos == 0) return;
+
+            double promedio = suma / totalPesos;
+            string estado = promedio >= 11 ? "APROBADO" : "DESAPROBADO";
+
+            var estadoRow = await _db.EstudianteCursoEstados
+                .FirstOrDefaultAsync(x => x.EstudianteId == estudianteId && x.CursoId == cursoId);
+
+            if (estadoRow == null)
+            {
+                estadoRow = new EstudianteCursoEstado
+                {
+                    EstudianteId = estudianteId,
+                    CursoId = cursoId,
+                    Estado = estado,
+                    NotaFinal = (decimal)promedio,  // ✅ conversión explícita segura
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _db.EstudianteCursoEstados.Add(estadoRow);
+            }
+            else
+            {
+                estadoRow.Estado = estado;
+                estadoRow.NotaFinal = (decimal)promedio;  // ✅ conversión explícita segura
+                estadoRow.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _db.SaveChangesAsync();
         }
+
+
     }
 }
