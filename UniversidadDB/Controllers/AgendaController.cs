@@ -10,7 +10,8 @@ namespace UniversidadDB.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "ESTUDIANTE")]
+
 public class AgendaController : ControllerBase
 {
     private readonly UniversidadContext _db;
