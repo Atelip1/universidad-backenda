@@ -820,7 +820,7 @@
           }
         }
       },
-      "SendGrid/9.28.1": {
+      "SendGrid/9.29.3": {
         "type": "package",
         "dependencies": {
           "Newtonsoft.Json": "13.0.1",
@@ -2885,10 +2885,10 @@
         "packageIcon.png"
       ]
     },
-    "SendGrid/9.28.1": {
-      "sha512": "LyIkgjd+svXuQxpqe5pvyOccyUdKcDqwnBNDPjyCngkKeVpXAOTAr3U1DBLWqHEbFHvu2UBFki3SJzDwxvJdfA==",
+    "SendGrid/9.29.3": {
+      "sha512": "nb/zHePecN9U4/Bmct+O+lpgK994JklbCCNMIgGPOone/DngjQoMCHeTvkl+m0Nglvm0dqMEshmvB4fO8eF3dA==",
       "type": "package",
-      "path": "sendgrid/9.28.1",
+      "path": "sendgrid/9.29.3",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2904,7 +2904,7 @@
         "lib/netstandard2.0/SendGrid.dll",
         "lib/netstandard2.0/SendGrid.pdb",
         "lib/netstandard2.0/SendGrid.xml",
-        "sendgrid.9.28.1.nupkg.sha512",
+        "sendgrid.9.29.3.nupkg.sha512",
         "sendgrid.nuspec"
       ]
     },
@@ -4487,7 +4487,7 @@
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 6.0.0",
       "Microsoft.EntityFrameworkCore.SqlServer >= 7.0.0",
       "Microsoft.EntityFrameworkCore.Tools >= 7.0.0",
-      "SendGrid >= 9.28.1",
+      "SendGrid >= 9.29.3",
       "Swashbuckle.AspNetCore >= 6.6.2"
     ]
   },
@@ -4566,7 +4566,7 @@
           },
           "SendGrid": {
             "target": "Package",
-            "version": "[9.28.1, )"
+            "version": "[9.29.3, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",
