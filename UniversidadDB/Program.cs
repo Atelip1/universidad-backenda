@@ -6,26 +6,26 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using UniversidadDB.Data;
 using UniversidadDB.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Render: bind al puerto asignado
+// Configuración de puerto en Render
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-// ✅ DbContext
+// DbContext para conexión a SQL Server
 builder.Services.AddDbContext<UniversidadContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ Servicios
+// Inyección de servicios personalizados
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<FcmService>();
 builder.Services.AddSingleton<JwtService>();
 
+// Configuración de controladores
 builder.Services.AddControllers();
 
-// ✅ JWT Authentication
+// JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "CAMBIA_ESTA_CLAVE_SUPER_SECRETA";
 var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -44,12 +44,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// ✅ Swagger + botón Authorize
+// Swagger Configuration
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "UniversidadDB API", Version = "v1" });
-
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -59,19 +58,15 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Description = "Escribe: Bearer {tu_token}"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
-            Array.Empty<string>()
-        }
+        { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() }
     });
 });
 
 var app = builder.Build();
 
-// ✅ Swagger en Render/Producción también
+// Usar Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -79,20 +74,24 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// ✅ Crear carpeta Uploads si no existe (EVITA: DirectoryNotFoundException)
+// Crear carpeta para archivos subidos si no existe
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "Uploads");
 Directory.CreateDirectory(uploadsPath);
 
-// ✅ Servir archivos subidos: https://tuapi/Uploads/archivo.pdf
+// Servir archivos estáticos (por ejemplo, imágenes subidas)
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/Uploads"
 });
 
-// ✅ Importante: Authentication ANTES que Authorization
+// Middlewares de autenticación y autorización
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Mapeo de controladores
 app.MapControllers();
+
+// Ejecutar la aplicación
 app.Run();
+
