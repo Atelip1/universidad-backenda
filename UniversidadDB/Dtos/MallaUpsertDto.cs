@@ -1,6 +1,7 @@
-﻿public class MallaCarrera
+﻿namespace UniversidadDB.Dtos;
+
+public class MallaUpsertDto
 {
-    public int CarreraId { get; set; }
     public int CursoId { get; set; }
     public int Ciclo { get; set; }
     public int Creditos { get; set; }

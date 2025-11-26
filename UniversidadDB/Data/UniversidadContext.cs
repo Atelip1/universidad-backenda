@@ -42,17 +42,14 @@ namespace UniversidadDB.Data
             modelBuilder.Entity<NotificacionSistema>().ToTable("NotificacionesSistema");
             modelBuilder.Entity<DeviceToken>().ToTable("DeviceTokens");
 
-            // === 1 a 1 Usuario -> Estudiante por Estudiante.UsuarioId ===
-            modelBuilder.Entity<Estudiante>()
-                .HasIndex(e => e.UsuarioId)
-                .IsUnique()
-                .HasFilter("[UsuarioId] IS NOT NULL"); // SQL Server filtered unique index
            
-           modelBuilder.Entity<Usuario>()
+            // === 1 a 1 Usuario -> Estudiante (Shared Key: Estudiante.EstudianteId = Usuario.UsuarioId) ===
+            modelBuilder.Entity<Usuario>()
                 .HasOne(u => u.Estudiante)
                 .WithOne(e => e.Usuario)
-                .HasForeignKey<Estudiante>(e => e.EstudianteId) // 👈 PK compartida
+                .HasForeignKey<Estudiante>(e => e.EstudianteId)
                 .OnDelete(DeleteBehavior.Restrict);
+
 
 
             // === Rol (Usuario -> Rol por RolId) ===
@@ -109,6 +106,10 @@ namespace UniversidadDB.Data
 
             modelBuilder.Entity<CursoMaterial>().ToTable("CursoMateriales")
                 .HasKey(x => x.MaterialId);
+
+            modelBuilder.Entity<MallaCarrera>().HasKey(x => new { x.CarreraId, x.CursoId });
+            modelBuilder.Entity<Prerequisito>().HasKey(x => new { x.CursoId, x.CursoPrereqId });
+
 
             base.OnModelCreating(modelBuilder);
         }

@@ -1,18 +1,26 @@
-﻿namespace UniversidadDB.Models
+﻿using System;
+using System.Collections.Generic;
+
+namespace UniversidadDB.Models
 {
     public class Estudiante
     {
-        public int EstudianteId { get; set; }    // ✅ PK normal (NO es FK)
-        public int? UsuarioId { get; set; }      // ✅ FK a Usuarios.UsuarioId
+        // ✅ Shared Key: EstudianteId == UsuarioId
+        public int EstudianteId { get; set; }
 
         public string? CodigoEstudiante { get; set; }
+
+        // ✅ Lo usas en LoginResponse: user.Estudiante?.Carrera
         public string? Carrera { get; set; }
+
+        // ✅ Para la malla por carrera
+        public int? CarreraId { get; set; }
+
         public int? Ciclo { get; set; }
-        public DateTime? FechaIngreso { get; set; }
+        public DateTime FechaIngreso { get; set; } = DateTime.UtcNow;
 
-        // Relación 1:1 con Usuario (opcional si UsuarioId es null)
+        // Navegaciones
         public Usuario? Usuario { get; set; }
-
         public ICollection<Inscripcion> Inscripciones { get; set; } = new List<Inscripcion>();
     }
 }
