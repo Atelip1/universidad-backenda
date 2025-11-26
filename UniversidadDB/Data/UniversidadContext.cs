@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SendGrid.Helpers.Mail;
 using UniversidadDB.Models;
+using UniversidadDB.Models.Comunidad;
 
 namespace UniversidadDB.Data
 {
@@ -24,7 +25,10 @@ namespace UniversidadDB.Data
         public DbSet<NotificacionSistema> NotificacionesSistema { get; set; } = null!;
         public DbSet<Nota> Notas { get; set; }
         public DbSet<MaterialCurso> MaterialCursos { get; set; }
-
+        public DbSet<Post> Posts => Set<Post>();
+        public DbSet<Comentario> Comentarios => Set<Comentario>();
+        public DbSet<Reporte> Reportes => Set<Reporte>();
+        public DbSet<Like> Likes => Set<Like>();
         // Apuntes & Recordatorios
         public DbSet<Apunte> Apuntes { get; set; } = null!;
         public DbSet<ApunteAdjunto> ApunteAdjuntos { get; set; } = null!;
@@ -92,7 +96,18 @@ namespace UniversidadDB.Data
                 .WithOne() // si no tienes navegación ApunteAdjunto.Apunte
                 .HasForeignKey(ad => ad.ApunteId)
                 .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Like>()
+           .HasKey(l => new { l.PostId, l.UsuarioId });
 
+            modelBuilder.Entity<Like>()
+                .HasOne(l => l.Post)
+                .WithMany(p => p.Likes)
+                .HasForeignKey(l => l.PostId);
+
+            modelBuilder.Entity<Comentario>()
+                .HasOne<Post>()
+                .WithMany(p => p.Comentarios)
+                .HasForeignKey(c => c.PostId);
             // === AGENDA / RECORDATORIOS ===
             modelBuilder.Entity<AgendaEvento>()
                 .ToTable("AgendaEventos")
