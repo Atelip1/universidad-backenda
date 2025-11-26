@@ -6,6 +6,11 @@ namespace UniversidadDB.Data
     public class UniversidadContext : DbContext
     {
         public UniversidadContext(DbContextOptions<UniversidadContext> options) : base(options) { }
+        public DbSet<Carrera> Carreras { get; set; } = null!;
+        public DbSet<MallaCarrera> MallaCarrera { get; set; } = null!;
+        public DbSet<Prerequisito> Prerequisitos { get; set; } = null!;
+        public DbSet<EstudianteCursoEstado> EstudianteCursoEstados { get; set; } = null!;
+        public DbSet<CursoMaterial> CursoMateriales { get; set; } = null!;
 
         public DbSet<DeviceToken> DeviceTokens { get; set; } = null!;
         public DbSet<Rol> Roles { get; set; } = null!;
@@ -42,12 +47,13 @@ namespace UniversidadDB.Data
                 .HasIndex(e => e.UsuarioId)
                 .IsUnique()
                 .HasFilter("[UsuarioId] IS NOT NULL"); // SQL Server filtered unique index
-
-            modelBuilder.Entity<Usuario>()
+           
+           modelBuilder.Entity<Usuario>()
                 .HasOne(u => u.Estudiante)
                 .WithOne(e => e.Usuario)
-                .HasForeignKey<Estudiante>(e => e.UsuarioId)
-                .OnDelete(DeleteBehavior.Restrict); // recomendado (evita cascadas peligrosas)
+                .HasForeignKey<Estudiante>(e => e.EstudianteId) // 👈 PK compartida
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             // === Rol (Usuario -> Rol por RolId) ===
             modelBuilder.Entity<Usuario>()
@@ -90,6 +96,19 @@ namespace UniversidadDB.Data
             modelBuilder.Entity<AgendaEvento>()
                 .ToTable("AgendaEventos")
                 .HasKey(x => x.EventoId);
+            modelBuilder.Entity<Carrera>().ToTable("Carreras").HasKey(x => x.CarreraId);
+
+            modelBuilder.Entity<MallaCarrera>().ToTable("MallaCarrera")
+                .HasKey(x => new { x.CarreraId, x.CursoId });
+
+            modelBuilder.Entity<Prerequisito>().ToTable("Prerequisitos")
+                .HasKey(x => new { x.CursoId, x.CursoPrereqId });
+
+            modelBuilder.Entity<EstudianteCursoEstado>().ToTable("EstudianteCursoEstado")
+                .HasKey(x => new { x.EstudianteId, x.CursoId });
+
+            modelBuilder.Entity<CursoMaterial>().ToTable("CursoMateriales")
+                .HasKey(x => x.MaterialId);
 
             base.OnModelCreating(modelBuilder);
         }
