@@ -7,7 +7,7 @@ namespace UniversidadDB.Models
     public class MallaCarrera
     {
         [Key]
-        public int Id { get; set; } // o MallaCarreraId, si prefieres
+        public int MallaId { get; set; }  // o MallaCarreraId, si prefieres
 
         public int CarreraId { get; set; }
         public int CursoId { get; set; }

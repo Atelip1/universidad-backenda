@@ -98,7 +98,8 @@ namespace UniversidadDB.Data
             modelBuilder.Entity<Carrera>().ToTable("Carreras").HasKey(x => x.CarreraId);
 
             modelBuilder.Entity<MallaCarrera>().ToTable("MallaCarrera")
-                .HasKey(x => new { x.CarreraId, x.CursoId });
+                 .HasKey(x => x.MallaId);
+
 
             modelBuilder.Entity<Prerequisito>().ToTable("Prerequisitos")
                 .HasKey(x => new { x.CursoId, x.CursoPrereqId });
