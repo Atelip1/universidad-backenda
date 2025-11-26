@@ -12,12 +12,10 @@
 
         public Rol Rol { get; set; } = null!;
 
-        // Relación 1 a 1 con Estudiante
+        // 1 a 1 (opcional)
         public Estudiante? Estudiante { get; set; }
-      
+
         public string? PasswordResetCode { get; set; }
         public DateTime? PasswordResetCodeExpiration { get; set; }
-       
-
     }
 }
