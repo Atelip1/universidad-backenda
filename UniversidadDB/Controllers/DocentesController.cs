@@ -2,6 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
 using UniversidadDB.Models;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -26,6 +30,7 @@ public class DocentesController : ControllerBase
         _context.Docentes.Add(docente);
         await _context.SaveChangesAsync();
 
+        // Si quieres devolver la foto aquí también, se debe hacer después de guardar el docente.
         return CreatedAtAction(nameof(GetDocente), new { id = docente.Id }, docente);
     }
 
@@ -85,7 +90,12 @@ public class DocentesController : ControllerBase
             return NotFound();
         }
 
-        // Aquí puedes implementar el código para subir la foto y guardar su URL en la base de datos
+        // Verificar si el archivo es válido (por ejemplo, tipo de archivo, tamaño, etc.)
+        if (foto == null || foto.Length == 0)
+        {
+            return BadRequest("No se ha enviado una foto válida.");
+        }
+
         var fotoUrl = await SubirImagen(foto); // Método para subir la foto y obtener la URL
 
         docente.FotoUrl = fotoUrl; // Guardar la URL de la foto
@@ -97,8 +107,20 @@ public class DocentesController : ControllerBase
     // Método para simular la subida de imagen
     private async Task<string> SubirImagen(IFormFile foto)
     {
-        // Lógica para subir la foto (puede ser a un servidor de almacenamiento o en la misma aplicación)
-        return "url_de_foto";  // Esta sería la URL de la foto subida
+        // Aquí puedes implementar la lógica real para subir la foto a un servidor de almacenamiento
+        // o utilizar un servicio de almacenamiento en la nube como AWS S3 o Azure Blob Storage.
+
+        // Para este ejemplo, solo guardamos el archivo en el servidor local:
+        var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        Directory.CreateDirectory(uploadsPath);
+
+        var filePath = Path.Combine(uploadsPath, foto.FileName);
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await foto.CopyToAsync(stream);
+        }
+
+        return $"/uploads/{foto.FileName}";  // Esta es la URL de acceso a la foto
     }
 
     // LIST: Obtener lista de docentes (sin CRUD para Estudiante)
@@ -109,14 +131,13 @@ public class DocentesController : ControllerBase
 
         if (!string.IsNullOrEmpty(busqueda))
         {
-            docentes = docentes.Where(d => d.Nombre.Contains(busqueda) || d.Especialidad.Contains(busqueda));
+            docentes = docentes.Where(d => d.Nombre.ToLower().Contains(busqueda.ToLower()) || d.Especialidad.ToLower().Contains(busqueda.ToLower()));
         }
 
         return await docentes.ToListAsync();
     }
 
     // READ: Ver detalle del docente
-    // Método para obtener los detalles del docente
     [HttpGet("detalle/{id}")]
     public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
     {
@@ -129,5 +150,4 @@ public class DocentesController : ControllerBase
 
         return docente;
     }
-
 }
