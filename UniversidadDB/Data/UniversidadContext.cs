@@ -14,7 +14,10 @@ namespace UniversidadDB.Data
         public DbSet<Prerequisito> Prerequisitos { get; set; } = null!;
         public DbSet<EstudianteCursoEstado> EstudianteCursoEstados { get; set; } = null!;
         public DbSet<CursoMaterial> CursoMateriales { get; set; } = null!;
+        // DbSet para la tabla Docentes
+        public DbSet<Docente> Docentes { get; set; }  // Esto permite acceder a la tabla Docentes
 
+        // Otros DbSets según lo necesites
         public DbSet<DeviceToken> DeviceTokens { get; set; } = null!;
         public DbSet<Rol> Roles { get; set; } = null!;
         public DbSet<Usuario> Usuarios { get; set; } = null!;
