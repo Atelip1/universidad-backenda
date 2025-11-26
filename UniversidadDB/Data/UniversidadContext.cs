@@ -107,9 +107,13 @@ namespace UniversidadDB.Data
             modelBuilder.Entity<CursoMaterial>().ToTable("CursoMateriales")
                 .HasKey(x => x.MaterialId);
 
-            modelBuilder.Entity<MallaCarrera>().HasKey(x => new { x.CarreraId, x.CursoId });
-            modelBuilder.Entity<Prerequisito>().HasKey(x => new { x.CursoId, x.CursoPrereqId });
-
+           
+            modelBuilder.Entity<EstudianteCursoEstado>(entity =>
+            {
+                // Notas 0.00 - 20.00 (ej: 10.50)
+                entity.Property(x => x.NotaFinal)
+                      .HasPrecision(4, 2);
+            });
 
             base.OnModelCreating(modelBuilder);
         }
