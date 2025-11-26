@@ -30,8 +30,7 @@ public class DocentesController : ControllerBase
         _context.Docentes.Add(docente);
         await _context.SaveChangesAsync();
 
-        // Si quieres devolver la foto aquí también, se debe hacer después de guardar el docente.
-        return CreatedAtAction(nameof(GetDocente), new { id = docente.Id }, docente);
+        return CreatedAtAction(nameof(GetDocente), new { id = docente.DocenteId }, docente);
     }
 
     // READ: Ver docente por Id
@@ -52,7 +51,7 @@ public class DocentesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> EditarDocente(int id, [FromBody] Docente docente)
     {
-        if (id != docente.Id)
+        if (id != docente.DocenteId)
         {
             return BadRequest("El ID del docente no coincide.");
         }
@@ -73,8 +72,7 @@ public class DocentesController : ControllerBase
             return NotFound();
         }
 
-        // Opción: Desactivar docente en lugar de eliminar
-        docente.Activo = false;  // 'Activo' es un campo booleano en tu modelo de Docente
+        docente.IsActive = false;  // 'IsActive' en lugar de 'Activo'
         await _context.SaveChangesAsync();
 
         return NoContent();
@@ -90,27 +88,21 @@ public class DocentesController : ControllerBase
             return NotFound();
         }
 
-        // Verificar si el archivo es válido (por ejemplo, tipo de archivo, tamaño, etc.)
         if (foto == null || foto.Length == 0)
         {
             return BadRequest("No se ha enviado una foto válida.");
         }
 
-        var fotoUrl = await SubirImagen(foto); // Método para subir la foto y obtener la URL
+        var fotoUrl = await SubirImagen(foto);
 
-        docente.FotoUrl = fotoUrl; // Guardar la URL de la foto
+        docente.FotoUrl = fotoUrl;
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Foto subida correctamente", fotoUrl });
     }
 
-    // Método para simular la subida de imagen
     private async Task<string> SubirImagen(IFormFile foto)
     {
-        // Aquí puedes implementar la lógica real para subir la foto a un servidor de almacenamiento
-        // o utilizar un servicio de almacenamiento en la nube como AWS S3 o Azure Blob Storage.
-
-        // Para este ejemplo, solo guardamos el archivo en el servidor local:
         var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
         Directory.CreateDirectory(uploadsPath);
 
@@ -120,10 +112,10 @@ public class DocentesController : ControllerBase
             await foto.CopyToAsync(stream);
         }
 
-        return $"/uploads/{foto.FileName}";  // Esta es la URL de acceso a la foto
+        return $"/uploads/{foto.FileName}";
     }
 
-    // LIST: Obtener lista de docentes (sin CRUD para Estudiante)
+    // LIST: Obtener lista de docentes
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes([FromQuery] string busqueda = "")
     {
@@ -131,7 +123,7 @@ public class DocentesController : ControllerBase
 
         if (!string.IsNullOrEmpty(busqueda))
         {
-            docentes = docentes.Where(d => d.Nombre.ToLower().Contains(busqueda.ToLower()) || d.Especialidad.ToLower().Contains(busqueda.ToLower()));
+            docentes = docentes.Where(d => d.Nombres.ToLower().Contains(busqueda.ToLower()) || d.Especialidad.ToLower().Contains(busqueda.ToLower()));
         }
 
         return await docentes.ToListAsync();
