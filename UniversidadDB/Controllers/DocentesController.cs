@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
 using UniversidadDB.Models;
+
 [Route("api/[controller]")]
 [ApiController]
 public class DocentesController : ControllerBase
@@ -115,7 +116,8 @@ public class DocentesController : ControllerBase
     }
 
     // READ: Ver detalle del docente
-    [HttpGet("{id}")]
+    // Método para obtener los detalles del docente
+    [HttpGet("detalle/{id}")]
     public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
     {
         var docente = await _context.Docentes.FindAsync(id);
@@ -127,4 +129,5 @@ public class DocentesController : ControllerBase
 
         return docente;
     }
+
 }
