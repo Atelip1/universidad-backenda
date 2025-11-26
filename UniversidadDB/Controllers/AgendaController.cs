@@ -24,22 +24,42 @@ public class AgendaController : ControllerBase
         [FromQuery] DateTime? to,
         [FromQuery] bool? completed)
     {
-        var userId = AuthHelpers.GetUserId(User);
-        var estudianteId = await AuthHelpers.GetEstudianteIdAsync(_db, userId);
+        try
+        {
+            var userId = AuthHelpers.GetUserId(User);
+            if (userId <= 0) return Unauthorized("JWT inválido (sin userId).");
 
-        // Defaults si no envías fechas
-        var fromVal = from ?? DateTime.UtcNow.AddDays(-30);
-        var toVal = to ?? DateTime.UtcNow.AddDays(30);
+            int estudianteId;
+            try
+            {
+                estudianteId = await AuthHelpers.GetEstudianteIdAsync(_db, userId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // Si es un admin o usuario sin estudiante
+                return Forbid(ex.Message); // o: return Unauthorized(ex.Message);
+            }
 
-        var q = _db.AgendaEventos.AsNoTracking()
-            .Where(e => e.EstudianteId == estudianteId && e.StartAt < toVal && e.EndAt > fromVal)
-            .AsQueryable();
+            // Defaults si no envías fechas
+            var fromVal = from ?? DateTime.UtcNow.AddDays(-30);
+            var toVal = to ?? DateTime.UtcNow.AddDays(30);
 
-        if (completed.HasValue) q = q.Where(e => e.IsCompleted == completed.Value);
+            var q = _db.AgendaEventos.AsNoTracking()
+                .Where(e => e.EstudianteId == estudianteId && e.StartAt < toVal && e.EndAt > fromVal)
+                .AsQueryable();
 
-        var data = await q.OrderBy(e => e.StartAt).ToListAsync();
-        return Ok(data);
+            if (completed.HasValue)
+                q = q.Where(e => e.IsCompleted == completed.Value);
+
+            var data = await q.OrderBy(e => e.StartAt).ToListAsync();
+            return Ok(data);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error en Agenda/me: {ex.Message}");
+        }
     }
+
 
     // POST /api/agenda/me
     [HttpPost("me")]
