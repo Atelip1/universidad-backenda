@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
-using UniversidadDB.Models.Comunidad;
-
 using UniversidadDB.Data;
+using UniversidadDB.Models.Comunidad;
 [ApiController]
 [Route("api/[controller]")]
 public class ComunidadController : ControllerBase
@@ -73,10 +73,24 @@ public class ComunidadController : ControllerBase
     [HttpPost("reportar")]
     public async Task<IActionResult> Reportar([FromBody] Reporte reporte)
     {
+        // Obtener el UsuarioId del token (suponiendo que el UserId está en el claim "sub" o "NameIdentifier")
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId == null)
+        {
+            return Unauthorized(new { message = "Usuario no autenticado." });
+        }
+
+        // Asignar el ReportadoPorId con el UsuarioId del usuario autenticado
+        reporte.ReportadoPorId = int.Parse(userId);  // Convertir el usuarioId a int si es necesario
+
+        // Guardar el reporte
         _context.Reportes.Add(reporte);
         await _context.SaveChangesAsync();
+
         return Ok(new { message = "Reporte enviado." });
     }
+
 
     // 🧹 Admin: listar reportes
     [HttpGet("reportes")]
