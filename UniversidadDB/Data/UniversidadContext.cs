@@ -49,12 +49,14 @@ namespace UniversidadDB.Data
                 .HasForeignKey<Estudiante>(e => e.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict); // recomendado (evita cascadas peligrosas)
 
-            // === Rol (si tu Usuario tiene RolId) ===
+            // === Rol (Usuario -> Rol por RolId) ===
             modelBuilder.Entity<Usuario>()
                 .HasOne(u => u.Rol)
-                .WithMany()
+                .WithMany(r => r.Usuarios)
                 .HasForeignKey(u => u.RolId)
+                .HasConstraintName("FK_Usuarios_Roles")
                 .OnDelete(DeleteBehavior.Restrict);
+
 
             // === Inscripciones ===
             modelBuilder.Entity<Inscripcion>()
