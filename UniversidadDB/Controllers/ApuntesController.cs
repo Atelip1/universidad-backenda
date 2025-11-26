@@ -18,32 +18,52 @@ public class ApuntesController : ControllerBase
     public ApuntesController(UniversidadContext db) => _db = db;
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? search, [FromQuery] bool? pinned, [FromQuery] int? cursoId)
+    public async Task<IActionResult> List(
+    [FromQuery] string? search,
+    [FromQuery] bool? pinned,
+    [FromQuery] int? cursoId)
     {
-        var userId = AuthHelpers.GetUserId(User);
-        var estudianteId = await AuthHelpers.GetEstudianteIdAsync(_db, userId);
-
-        var q = _db.Apuntes.AsNoTracking()
-            .Where(a => a.EstudianteId == estudianteId)
-            .Include(a => a.Adjuntos)
-            .AsQueryable();
-
-        if (pinned.HasValue) q = q.Where(a => a.IsPinned == pinned.Value);
-        if (cursoId.HasValue) q = q.Where(a => a.CursoId == cursoId.Value);
-
-        if (!string.IsNullOrWhiteSpace(search))
+        try
         {
-            var s = search.Trim();
-            q = q.Where(a => a.Titulo.Contains(s) || a.Contenido.Contains(s));
+            var userId = AuthHelpers.GetUserId(User);
+            if (userId <= 0) return Unauthorized(new { message = "JWT inválido." });
+
+            int estudianteId;
+            try
+            {
+                estudianteId = await AuthHelpers.GetEstudianteIdAsync(_db, userId);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // ✅ NO uses Forbid(ex.Message)
+                return StatusCode(403, new { message = "Este usuario no está vinculado a un estudiante." });
+            }
+
+            var q = _db.Apuntes.AsNoTracking()
+                .Where(a => a.EstudianteId == estudianteId)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(a => a.Titulo.Contains(s) || a.Contenido.Contains(s));
+            }
+
+            if (pinned.HasValue) q = q.Where(a => a.IsPinned == pinned.Value);
+            if (cursoId.HasValue) q = q.Where(a => a.CursoId == cursoId.Value);
+
+            var data = await q.OrderByDescending(a => a.IsPinned)
+                              .ThenByDescending(a => a.UpdatedAt)
+                              .ToListAsync();
+
+            return Ok(data);
         }
-
-        var data = await q
-            .OrderByDescending(a => a.IsPinned)
-            .ThenByDescending(a => a.UpdatedAt)
-            .ToListAsync();
-
-        return Ok(data);
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error en Apuntes: {ex.Message}" });
+        }
     }
+
 
     [HttpGet("{apunteId:int}")]
     public async Task<IActionResult> GetOne(int apunteId)

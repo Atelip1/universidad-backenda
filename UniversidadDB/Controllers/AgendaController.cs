@@ -20,27 +20,25 @@ public class AgendaController : ControllerBase
     // GET /api/agenda/me?from=2025-11-01&to=2025-11-30&completed=false
     [HttpGet("me")]
     public async Task<IActionResult> MyAgenda(
-        [FromQuery] DateTime? from,
-        [FromQuery] DateTime? to,
-        [FromQuery] bool? completed)
+    [FromQuery] DateTime? from,
+    [FromQuery] DateTime? to,
+    [FromQuery] bool? completed)
     {
         try
         {
             var userId = AuthHelpers.GetUserId(User);
-            if (userId <= 0) return Unauthorized("JWT inválido (sin userId).");
+            if (userId <= 0) return Unauthorized(new { message = "JWT inválido." });
 
             int estudianteId;
             try
             {
                 estudianteId = await AuthHelpers.GetEstudianteIdAsync(_db, userId);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (UnauthorizedAccessException)
             {
-                // Si es un admin o usuario sin estudiante
-                return Forbid(ex.Message); // o: return Unauthorized(ex.Message);
+                return StatusCode(403, new { message = "Este usuario no está vinculado a un estudiante." });
             }
 
-            // Defaults si no envías fechas
             var fromVal = from ?? DateTime.UtcNow.AddDays(-30);
             var toVal = to ?? DateTime.UtcNow.AddDays(30);
 
@@ -48,17 +46,17 @@ public class AgendaController : ControllerBase
                 .Where(e => e.EstudianteId == estudianteId && e.StartAt < toVal && e.EndAt > fromVal)
                 .AsQueryable();
 
-            if (completed.HasValue)
-                q = q.Where(e => e.IsCompleted == completed.Value);
+            if (completed.HasValue) q = q.Where(e => e.IsCompleted == completed.Value);
 
             var data = await q.OrderBy(e => e.StartAt).ToListAsync();
             return Ok(data);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error en Agenda/me: {ex.Message}");
+            return StatusCode(500, new { message = $"Error en Agenda: {ex.Message}" });
         }
     }
+
 
 
     // POST /api/agenda/me
