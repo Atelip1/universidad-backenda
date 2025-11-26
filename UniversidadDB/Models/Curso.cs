@@ -10,7 +10,10 @@
         public string? ColorHex { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
+        // 🆕 Agrega este campo
+        public string? Codigo { get; set; }
 
+        public bool Activo { get; set; }
         public PeriodoAcademico? Periodo { get; set; }
 
         public ICollection<Inscripcion> Inscripciones { get; set; } = new List<Inscripcion>();

@@ -1,13 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SendGrid.Helpers.Mail;
 using UniversidadDB.Models;
 
 namespace UniversidadDB.Data
 {
     public class UniversidadContext : DbContext
     {
+        public DbSet<MallaCarrera> MallaCarrera { get; set; }
+
         public UniversidadContext(DbContextOptions<UniversidadContext> options) : base(options) { }
         public DbSet<Carrera> Carreras { get; set; } = null!;
-        public DbSet<MallaCarrera> MallaCarrera { get; set; } = null!;
         public DbSet<Prerequisito> Prerequisitos { get; set; } = null!;
         public DbSet<EstudianteCursoEstado> EstudianteCursoEstados { get; set; } = null!;
         public DbSet<CursoMaterial> CursoMateriales { get; set; } = null!;

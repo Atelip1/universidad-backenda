@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using UniversidadDB.Data;
 using UniversidadDB.Dtos;
 using UniversidadDB.Models;
+using UniversidadDB.Models.DTOs;
+
 
 namespace UniversidadDB.Controllers
 {
@@ -19,7 +21,6 @@ namespace UniversidadDB.Controllers
         public AdminMallaController(UniversidadContext db) => _db = db;
 
         // ✅ GET /api/admin/malla/carreras
-        // Devuelve todas las carreras (para llenar el combo en Flutter)
         [HttpGet("carreras")]
         public async Task<IActionResult> GetCarreras()
         {
@@ -31,7 +32,6 @@ namespace UniversidadDB.Controllers
         }
 
         // ✅ GET /api/admin/malla/carreras/{carreraId}
-        // Devuelve la malla completa de una carrera
         [HttpGet("carreras/{carreraId:int}")]
         public async Task<IActionResult> GetMallaCarrera(int carreraId)
         {
@@ -60,7 +60,6 @@ namespace UniversidadDB.Controllers
         }
 
         // ✅ POST /api/admin/malla/carreras/{carreraId}
-        // Crea o actualiza un ítem de la malla
         [HttpPost("carreras/{carreraId:int}")]
         public async Task<IActionResult> UpsertMallaItem(int carreraId, [FromBody] MallaUpsertDto dto)
         {
@@ -121,6 +120,53 @@ namespace UniversidadDB.Controllers
             _db.MallaCarrera.Remove(row);
             await _db.SaveChangesAsync();
             return NoContent();
+        }
+
+        // ✅ NUEVO: POST /api/admin/malla/carreras/{carreraId}/curso-nuevo
+        [HttpPost("carreras/{carreraId:int}/curso-nuevo")]
+        public async Task<IActionResult> CrearYAsociarCurso(int carreraId, [FromBody] NuevoCursoMallaDto dto)
+        {
+            if (dto == null)
+                return BadRequest("Body requerido.");
+
+            var carreraExists = await _db.Carreras.AnyAsync(x => x.CarreraId == carreraId);
+            if (!carreraExists) return NotFound("Carrera no existe.");
+
+            if (string.IsNullOrWhiteSpace(dto.Nombre))
+                return BadRequest("El nombre del curso es obligatorio.");
+
+            // 1️⃣ Crear el curso
+            var curso = new Curso
+            {
+                Nombre = dto.Nombre,
+                Codigo = dto.Codigo,
+                Activo = true
+            };
+            _db.Cursos.Add(curso);
+            await _db.SaveChangesAsync();
+
+            // 2️⃣ Asociar el curso a la malla
+            var malla = new MallaCarrera
+            {
+                CarreraId = carreraId,
+                CursoId = curso.CursoId,
+                Ciclo = dto.Ciclo,
+                Creditos = dto.Creditos,
+                Obligatorio = dto.Obligatorio,
+                Activo = dto.Activo
+            };
+            _db.MallaCarrera.Add(malla);
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "Curso creado y asociado correctamente ✅",
+                malla.CarreraId,
+                curso.CursoId,
+                curso.Nombre,
+                malla.Ciclo,
+                malla.Creditos
+            });
         }
 
         // ✅ POST /api/admin/malla/prerequisitos/{cursoId}/{cursoPrereqId}
