@@ -25,10 +25,11 @@ namespace UniversidadDB.Data
         public DbSet<NotificacionSistema> NotificacionesSistema { get; set; } = null!;
         public DbSet<Nota> Notas { get; set; }
         public DbSet<MaterialCurso> MaterialCursos { get; set; }
-        public DbSet<Post> Posts => Set<Post>();
-        public DbSet<Comentario> Comentarios => Set<Comentario>();
-        public DbSet<Reporte> Reportes => Set<Reporte>();
-        public DbSet<Like> Likes => Set<Like>();
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<Comentario> Comentarios { get; set; }
+        public DbSet<Reporte> Reportes { get; set; }
+        public DbSet<Like> Likes { get; set; }
+
         // Apuntes & Recordatorios
         public DbSet<Apunte> Apuntes { get; set; } = null!;
         public DbSet<ApunteAdjunto> ApunteAdjuntos { get; set; } = null!;
