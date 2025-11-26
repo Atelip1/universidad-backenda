@@ -44,7 +44,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-
 // ✅ Swagger + botón Authorize
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -83,10 +82,14 @@ app.UseSwaggerUI(c =>
 // ✅ Importante: Authentication ANTES que Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ✅ FIX Render: asegurar que exista /app/Uploads antes de usar StaticFiles
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+Directory.CreateDirectory(uploadsPath);
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "Uploads")),
+    FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/Uploads"
 });
 
