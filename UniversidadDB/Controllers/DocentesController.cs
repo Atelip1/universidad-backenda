@@ -119,35 +119,30 @@ public class DocentesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes([FromQuery] string? busqueda = null)
     {
-        var query = _context.Docentes.AsQueryable();
+        var query = _context.Docentes.AsNoTracking().Where(d => d.IsActive).AsQueryable();
 
-        // Si hay texto de búsqueda, filtramos por nombre o especialidad
-        if (!string.IsNullOrEmpty(busqueda))
+        if (!string.IsNullOrWhiteSpace(busqueda))
         {
-            busqueda = busqueda.ToLower();
+            busqueda = busqueda.Trim();
             query = query.Where(d =>
-                d.Nombres.ToLower().Contains(busqueda) ||
-                d.Apellidos.ToLower().Contains(busqueda) ||
-                d.Especialidad.ToLower().Contains(busqueda));
+                (d.Nombres ?? "").Contains(busqueda) ||
+                (d.Apellidos ?? "").Contains(busqueda) ||
+                (d.Especialidad ?? "").Contains(busqueda));
         }
 
-        // Devuelve solo docentes activos (si quieres incluir inactivos, quita esta línea)
-        var docentes = await query
-            .Where(d => d.IsActive == true)
-            .ToListAsync();
-
+        var docentes = await query.OrderBy(d => d.Apellidos).ThenBy(d => d.Nombres).ToListAsync();
         return Ok(docentes);
     }
 
-    // Ver detalle de un docente
-    [HttpGet("detalle/{id}")]
+    // ✅ DETALLE
+    // GET: /api/docentes/5
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
     {
-        var docente = await _context.Docentes.FindAsync(id);
+        var docente = await _context.Docentes.AsNoTracking()
+            .FirstOrDefaultAsync(d => d.DocenteId == id && d.IsActive);
 
-        if (docente == null)
-            return NotFound();
-
+        if (docente == null) return NotFound();
         return Ok(docente);
     }
 
