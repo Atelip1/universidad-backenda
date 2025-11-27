@@ -9,13 +9,14 @@ namespace UniversidadDB.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // ✅ requiere JWT
+    [Authorize] // Requiere JWT
     public class NotificacionesController : ControllerBase
     {
         private readonly UniversidadContext _context;
+
         public NotificacionesController(UniversidadContext context) => _context = context;
 
-        // ✅ GET: /api/Notificaciones/mias?soloNoLeidas=false&page=1&pageSize=30
+        // Obtener notificaciones del usuario
         [HttpGet("mias")]
         public async Task<IActionResult> MisNotificaciones(
             [FromQuery] bool soloNoLeidas = false,
@@ -28,16 +29,16 @@ namespace UniversidadDB.Controllers
 
             var userId = GetUserIdOrThrow();
 
-            var q = _context.NotificacionesSistema
+            var query = _context.Notificaciones
                 .AsNoTracking()
                 .Where(n => n.UsuarioId == userId);
 
             if (soloNoLeidas)
-                q = q.Where(n => !n.Leida);
+                query = query.Where(n => !n.Leida);
 
-            var total = await q.CountAsync();
+            var total = await query.CountAsync();
 
-            var data = await q
+            var notifications = await query
                 .OrderByDescending(n => n.FechaCreacion)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -47,34 +48,36 @@ namespace UniversidadDB.Controllers
                     n.Titulo,
                     n.Mensaje,
                     n.FechaCreacion,
-                    n.Leida
+                    n.Leida,
+                    n.Tipo,
+                    n.Canal
                 })
                 .ToListAsync();
 
-            return Ok(new { total, page, pageSize, data });
+            return Ok(new { total, page, pageSize, notifications });
         }
 
-        // ✅ GET: /api/Notificaciones/unread-count
+        // Obtener el número de notificaciones no leídas
         [HttpGet("unread-count")]
         public async Task<IActionResult> UnreadCount()
         {
             var userId = GetUserIdOrThrow();
 
-            var count = await _context.NotificacionesSistema
+            var unreadCount = await _context.Notificaciones
                 .AsNoTracking()
                 .Where(n => n.UsuarioId == userId && !n.Leida)
                 .CountAsync();
 
-            return Ok(new { unread = count });
+            return Ok(new { unread = unreadCount });
         }
 
-        // ✅ POST: /api/Notificaciones/{id}/leer
+        // Marcar una notificación como leída
         [HttpPost("{id:int}/leer")]
         public async Task<IActionResult> MarcarLeida([FromRoute] int id)
         {
             var userId = GetUserIdOrThrow();
 
-            var notif = await _context.NotificacionesSistema
+            var notif = await _context.Notificaciones
                 .FirstOrDefaultAsync(n => n.NotificacionId == id && n.UsuarioId == userId);
 
             if (notif == null) return NotFound("Notificación no encontrada.");
@@ -85,16 +88,38 @@ namespace UniversidadDB.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return Ok(new { message = "Marcada como leída" });
+            return Ok(new { message = "Notificación marcada como leída" });
+        }
+
+        // Crear una nueva notificación
+        [HttpPost]
+        public async Task<IActionResult> CrearNotificacion([FromBody] NotificacionDto notificacionDto)
+        {
+            var userId = GetUserIdOrThrow();
+
+            var newNotification = new Notificacion
+            {
+                UsuarioId = userId,
+                Titulo = notificacionDto.Titulo,
+                Mensaje = notificacionDto.Mensaje,
+                FechaCreacion = DateTime.UtcNow,
+                Leida = false,
+                Tipo = notificacionDto.Tipo,
+                Canal = notificacionDto.Canal
+            };
+
+            _context.Notificaciones.Add(newNotification);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(MisNotificaciones), new { id = newNotification.NotificacionId }, newNotification);
         }
 
         private int GetUserIdOrThrow()
         {
-            var claim =
-                User.FindFirst(ClaimTypes.NameIdentifier) ??
-                User.FindFirst("id") ??
-                User.FindFirst("userId") ??
-                User.FindFirst("sub");
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier) ??
+                        User.FindFirst("id") ??
+                        User.FindFirst("userId") ??
+                        User.FindFirst("sub");
 
             if (claim == null || !int.TryParse(claim.Value, out var userId))
                 throw new UnauthorizedAccessException("No se encontró el userId en el JWT.");

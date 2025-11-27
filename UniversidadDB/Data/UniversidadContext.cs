@@ -25,13 +25,14 @@ namespace UniversidadDB.Data
         public DbSet<PeriodoAcademico> PeriodosAcademicos { get; set; } = null!;
         public DbSet<Curso> Cursos { get; set; } = null!;
         public DbSet<Inscripcion> Inscripciones { get; set; } = null!;
-        public DbSet<NotificacionSistema> NotificacionesSistema { get; set; } = null!;
+        public DbSet<Notificacion> NotificacionesSistema { get; set; } = null!;
         public DbSet<Nota> Notas { get; set; }
         public DbSet<MaterialCurso> MaterialCursos { get; set; }
         public DbSet<Post> Posts { get; set; }
         public DbSet<Comentario> Comentarios { get; set; }
         public DbSet<Reporte> Reportes { get; set; }
         public DbSet<Like> Likes { get; set; }
+        public DbSet<Notificacion> Notificaciones { get; set; }
 
         // Apuntes & Recordatorios
         public DbSet<Apunte> Apuntes { get; set; } = null!;
@@ -51,7 +52,7 @@ namespace UniversidadDB.Data
 
             modelBuilder.Entity<PeriodoAcademico>().ToTable("PeriodosAcademicos").HasKey(x => x.Id);
 
-            modelBuilder.Entity<NotificacionSistema>().ToTable("NotificacionesSistema");
+            modelBuilder.Entity<Notificacion>().ToTable("NotificacionesSistema");
             modelBuilder.Entity<DeviceToken>().ToTable("DeviceTokens");
 
            
