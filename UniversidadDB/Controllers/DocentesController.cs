@@ -116,34 +116,31 @@ public class DocentesController : ControllerBase
     }
 
     // LIST: Obtener lista de docentes
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes([FromQuery] string? busqueda = null)
-    {
-        var query = _context.Docentes.AsNoTracking().Where(d => d.IsActive).AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(busqueda))
+ 
+        // Obtener la lista completa de docentes
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes()
         {
-            busqueda = busqueda.Trim();
-            query = query.Where(d =>
-                (d.Nombres ?? "").Contains(busqueda) ||
-                (d.Apellidos ?? "").Contains(busqueda) ||
-                (d.Especialidad ?? "").Contains(busqueda));
+            // Obtener todos los docentes activos y ordenarlos por apellido y nombre
+            var docentes = await _context.Docentes
+                .AsNoTracking()   // Para evitar cambios en la base de datos
+                .Where(d => d.IsActive)  // Solo los docentes activos
+                .OrderBy(d => d.Apellidos)  // Ordenar por apellido primero
+                .ThenBy(d => d.Nombres)    // Luego por nombre
+                .ToListAsync();
+
+            return Ok(docentes);
         }
 
-        var docentes = await query.OrderBy(d => d.Apellidos).ThenBy(d => d.Nombres).ToListAsync();
-        return Ok(docentes);
-    }
+        // Obtener detalle de un docente
+        [HttpGet("detalle/{id:int}")]
+        public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
+        {
+            // Buscar al docente por su ID
+            var docente = await _context.Docentes.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.DocenteId == id && d.IsActive);  // Solo activos
 
-    // DETALLE: Obtener detalle de un docente
-    // Cambié la ruta de "detalle/{id}" a "detalle/{id:int}" para evitar la colisión con el método de lista
-    [HttpGet("detalle/{id:int}")]
-    public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
-    {
-        var docente = await _context.Docentes.AsNoTracking()
-            .FirstOrDefaultAsync(d => d.DocenteId == id && d.IsActive);
-
-        if (docente == null) return NotFound();
-        return Ok(docente);
-    }
-
+            if (docente == null) return NotFound();
+            return Ok(docente);
+        }
 }
