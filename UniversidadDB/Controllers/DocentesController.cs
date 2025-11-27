@@ -134,9 +134,9 @@ public class DocentesController : ControllerBase
         return Ok(docentes);
     }
 
-    // ✅ DETALLE
-    // GET: /api/docentes/5
-    [HttpGet("{id:int}")]
+    // DETALLE: Obtener detalle de un docente
+    // Cambié la ruta de "detalle/{id}" a "detalle/{id:int}" para evitar la colisión con el método de lista
+    [HttpGet("detalle/{id:int}")]
     public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
     {
         var docente = await _context.Docentes.AsNoTracking()
