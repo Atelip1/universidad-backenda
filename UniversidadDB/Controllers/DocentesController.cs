@@ -117,29 +117,38 @@ public class DocentesController : ControllerBase
 
     // LIST: Obtener lista de docentes
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes([FromQuery] string busqueda = "")
+    public async Task<ActionResult<IEnumerable<Docente>>> GetDocentes([FromQuery] string? busqueda = null)
     {
-        var docentes = _context.Docentes.AsQueryable();
+        var query = _context.Docentes.AsQueryable();
 
+        // Si hay texto de búsqueda, filtramos por nombre o especialidad
         if (!string.IsNullOrEmpty(busqueda))
         {
-            docentes = docentes.Where(d => d.Nombres.ToLower().Contains(busqueda.ToLower()) || d.Especialidad.ToLower().Contains(busqueda.ToLower()));
+            busqueda = busqueda.ToLower();
+            query = query.Where(d =>
+                d.Nombres.ToLower().Contains(busqueda) ||
+                d.Apellidos.ToLower().Contains(busqueda) ||
+                d.Especialidad.ToLower().Contains(busqueda));
         }
 
-        return await docentes.ToListAsync();
+        // Devuelve solo docentes activos (si quieres incluir inactivos, quita esta línea)
+        var docentes = await query
+            .Where(d => d.IsActive == true)
+            .ToListAsync();
+
+        return Ok(docentes);
     }
 
-    // READ: Ver detalle del docente
+    // Ver detalle de un docente
     [HttpGet("detalle/{id}")]
     public async Task<ActionResult<Docente>> GetDocenteDetalle(int id)
     {
         var docente = await _context.Docentes.FindAsync(id);
 
         if (docente == null)
-        {
             return NotFound();
-        }
 
-        return docente;
+        return Ok(docente);
     }
+
 }
