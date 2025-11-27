@@ -94,16 +94,14 @@ namespace UniversidadDB.Controllers
         // Crear una nueva notificación (Solo el Administrador puede enviar notificaciones)
         [HttpPost]
         [Authorize(Roles = "ADMIN")] // Solo los administradores pueden crear notificaciones
-        public async Task<IActionResult> CrearNotificacion([FromBody] NotificacionDto notificacionDto, [FromQuery] int usuarioId)
+        public async Task<IActionResult> CrearNotificacion([FromBody] NotificacionDto notificacionDto)
         {
-            // Verificar si el usuario existe
-            var usuario = await _context.Usuarios.FindAsync(usuarioId);
-            if (usuario == null)
-                return NotFound("Usuario no encontrado.");
+            // Verificar si el usuario que realiza la petición tiene privilegios de ADMIN
+            var userId = GetUserIdOrThrow();  // Este método asegura que el que hace la petición es un admin
 
+            // Crear la nueva notificación
             var newNotification = new Notificacion
             {
-                UsuarioId = usuarioId, // Asignamos la notificación al usuario especificado
                 Titulo = notificacionDto.Titulo,
                 Mensaje = notificacionDto.Mensaje,
                 FechaCreacion = DateTime.UtcNow,
@@ -112,14 +110,35 @@ namespace UniversidadDB.Controllers
                 Canal = notificacionDto.Canal
             };
 
-            _context.Notificaciones.Add(newNotification);
+            // Obtener todos los usuarios para enviarles la notificación
+            var usuarios = await _context.Usuarios.ToListAsync();
+
+            // Crear una notificación para cada usuario
+            foreach (var usuario in usuarios)
+            {
+                var userNotification = new Notificacion
+                {
+                    UsuarioId = usuario.UsuarioId, // Asignamos la notificación a cada usuario
+                    Titulo = newNotification.Titulo,
+                    Mensaje = newNotification.Mensaje,
+                    FechaCreacion = DateTime.UtcNow,
+                    Leida = false,
+                    Tipo = newNotification.Tipo,
+                    Canal = newNotification.Canal
+                };
+
+                _context.Notificaciones.Add(userNotification);  // Añadir la notificación a la base de datos
+            }
+
+            // Guardar todas las notificaciones a la base de datos
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(MisNotificaciones), new { id = newNotification.NotificacionId }, newNotification);
+            return Ok(new { message = "Notificación enviada a todos los usuarios" });
         }
 
         private int GetUserIdOrThrow()
         {
+            // Obtiene el ID del usuario desde el token JWT para asegurarse de que sea un ADMIN
             var claim = User.FindFirst(ClaimTypes.NameIdentifier) ??
                         User.FindFirst("id") ??
                         User.FindFirst("userId") ??
@@ -130,5 +149,6 @@ namespace UniversidadDB.Controllers
 
             return userId;
         }
+
     }
 }
