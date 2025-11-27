@@ -33,7 +33,7 @@ namespace UniversidadDB.Data
         public DbSet<Reporte> Reportes { get; set; }
         public DbSet<Like> Likes { get; set; }
         public DbSet<Notificacion> Notificaciones { get; set; }
-
+        public DbSet<Backup> Backups { get; set; }
         // Apuntes & Recordatorios
         public DbSet<Apunte> Apuntes { get; set; } = null!;
         public DbSet<ApunteAdjunto> ApunteAdjuntos { get; set; } = null!;
