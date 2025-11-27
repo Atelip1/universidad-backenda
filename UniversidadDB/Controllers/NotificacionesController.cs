@@ -16,7 +16,7 @@ namespace UniversidadDB.Controllers
 
         public NotificacionesController(UniversidadContext context) => _context = context;
 
-        // Obtener notificaciones del usuario
+        // Obtener notificaciones del usuario (Estudiantes)
         [HttpGet("mias")]
         public async Task<IActionResult> MisNotificaciones(
             [FromQuery] bool soloNoLeidas = false,
@@ -57,7 +57,7 @@ namespace UniversidadDB.Controllers
             return Ok(new { total, page, pageSize, notifications });
         }
 
-        // Obtener el número de notificaciones no leídas
+        // Obtener el número de notificaciones no leídas para un usuario (Estudiantes)
         [HttpGet("unread-count")]
         public async Task<IActionResult> UnreadCount()
         {
@@ -91,15 +91,19 @@ namespace UniversidadDB.Controllers
             return Ok(new { message = "Notificación marcada como leída" });
         }
 
-        // Crear una nueva notificación
+        // Crear una nueva notificación (Solo el Administrador puede enviar notificaciones)
         [HttpPost]
-        public async Task<IActionResult> CrearNotificacion([FromBody] NotificacionDto notificacionDto)
+        [Authorize(Roles = "ADMIN")] // Solo los administradores pueden crear notificaciones
+        public async Task<IActionResult> CrearNotificacion([FromBody] NotificacionDto notificacionDto, [FromQuery] int usuarioId)
         {
-            var userId = GetUserIdOrThrow();
+            // Verificar si el usuario existe
+            var usuario = await _context.Usuarios.FindAsync(usuarioId);
+            if (usuario == null)
+                return NotFound("Usuario no encontrado.");
 
             var newNotification = new Notificacion
             {
-                UsuarioId = userId,
+                UsuarioId = usuarioId, // Asignamos la notificación al usuario especificado
                 Titulo = notificacionDto.Titulo,
                 Mensaje = notificacionDto.Mensaje,
                 FechaCreacion = DateTime.UtcNow,
