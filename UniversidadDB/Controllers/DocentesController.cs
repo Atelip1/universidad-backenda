@@ -124,7 +124,6 @@ public class DocentesController : ControllerBase
             // Obtener todos los docentes activos y ordenarlos por apellido y nombre
             var docentes = await _context.Docentes
                 .AsNoTracking()   // Para evitar cambios en la base de datos
-                .Where(d => d.IsActive)  // Solo los docentes activos
                 .OrderBy(d => d.Apellidos)  // Ordenar por apellido primero
                 .ThenBy(d => d.Nombres)    // Luego por nombre
                 .ToListAsync();
